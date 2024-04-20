@@ -54,22 +54,19 @@ class ModelNetDataLoader(Dataset):
         self.uniform = args.use_uniform_sample
         self.use_normals = args.use_normals
         self.num_category = args.num_category
+        self.random_choice_sampling = args.use_random_choice_sampling
 
-        if self.num_category == 10:
-            self.catfile = os.path.join(self.root, 'modelnet10_shape_names.txt')
-        else:
-            self.catfile = os.path.join(self.root, 'modelnet40_shape_names.txt')
+        shape_names_path = f"modelnet{self.num_category}_shape_names.txt"
+        train_path = f"modelnet{self.num_category}_train.txt"
+        test_path = f"modelnet{self.num_category}_test.txt"
 
+        self.catfile = os.path.join(self.root, shape_names_path)
         self.cat = [line.rstrip() for line in open(self.catfile)]
         self.classes = dict(zip(self.cat, range(len(self.cat))))
 
         shape_ids = {}
-        if self.num_category == 10:
-            shape_ids['train'] = [line.rstrip() for line in open(os.path.join(self.root, 'modelnet10_train.txt'))]
-            shape_ids['test'] = [line.rstrip() for line in open(os.path.join(self.root, 'modelnet10_test.txt'))]
-        else:
-            shape_ids['train'] = [line.rstrip() for line in open(os.path.join(self.root, 'modelnet40_train.txt'))]
-            shape_ids['test'] = [line.rstrip() for line in open(os.path.join(self.root, 'modelnet40_test.txt'))]
+        shape_ids['train'] = [line.rstrip() for line in open(os.path.join(self.root, train_path))]
+        shape_ids['test'] = [line.rstrip() for line in open(os.path.join(self.root, test_path))]
 
         assert (split == 'train' or split == 'test')
         shape_names = ['_'.join(x.split('_')[0:-1]) for x in shape_ids[split]]
@@ -123,6 +120,9 @@ class ModelNetDataLoader(Dataset):
 
             if self.uniform:
                 point_set = farthest_point_sample(point_set, self.npoints)
+            elif self.random_choice_sampling:
+                random_indices = np.random.choice(range(10_000), self.npoints)
+                point_set = point_set[random_indices, :]
             else:
                 point_set = point_set[0:self.npoints, :]
                 
