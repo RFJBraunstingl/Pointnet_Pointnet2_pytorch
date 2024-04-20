@@ -46,6 +46,16 @@ def farthest_point_sample(point, npoint):
     return point
 
 
+def map_to_synth_path(path_to_model_file):
+    # i.e.: 'bottle_0001.txt' -> 'bottle_001.txt'
+    # i.e.: 'airplane_0660.txt' -> 'airplane_660.txt'
+    # i.e.: 'tv_stand_0123.txt' -> 'tv_stand_123.txt'
+    parts = path_to_model_file.split('_')
+    parts[-1] = parts[-1][1:]
+    result = '_'.join(parts)
+    return result
+
+
 class ModelNetDataLoader(Dataset):
     def __init__(self, root, args, split='train', process_data=False):
         self.root = root
@@ -55,6 +65,7 @@ class ModelNetDataLoader(Dataset):
         self.use_normals = args.use_normals
         self.num_category = args.num_category
         self.random_choice_sampling = args.use_random_choice_sampling
+        self.synthetic_augmentation_probability = args.synthetic_augmentation_probability
 
         shape_names_path = f"modelnet{self.num_category}_shape_names.txt"
         train_path = f"modelnet{self.num_category}_train.txt"
@@ -114,9 +125,14 @@ class ModelNetDataLoader(Dataset):
             point_set, label = self.list_of_points[index], self.list_of_labels[index]
         else:
             fn = self.datapath[index]
+            path_to_model_file = fn[1]
+
+            if random.random() < self.synthetic_augmentation_probability:
+                path_to_model_file = map_to_synth_path(path_to_model_file)
+
             cls = self.classes[self.datapath[index][0]]
             label = np.array([cls]).astype(np.int32)
-            point_set = np.loadtxt(fn[1], delimiter=',').astype(np.float32)
+            point_set = np.loadtxt(path_to_model_file, delimiter=',').astype(np.float32)
 
             if self.uniform:
                 point_set = farthest_point_sample(point_set, self.npoints)
