@@ -66,7 +66,7 @@ class ModelNetDataLoader(Dataset):
         self.use_normals = args.use_normals
         self.num_category = args.num_category
         self.random_choice_sampling = args.use_random_choice_sampling
-        self.synthetic_augmentation_probability = args.synthetic_augmentation_probability
+        self.synthetic_augmentation_probability = args.synthetic_augmentation_probability if split == 'train' else 0
 
         shape_names_path = f"modelnet{self.num_category}_shape_names.txt"
         train_path = f"modelnet{self.num_category}_train.txt"
