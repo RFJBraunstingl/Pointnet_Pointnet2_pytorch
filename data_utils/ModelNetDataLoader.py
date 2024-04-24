@@ -134,11 +134,12 @@ class ModelNetDataLoader(Dataset):
             cls = self.classes[self.datapath[index][0]]
             label = np.array([cls]).astype(np.int32)
             point_set = np.loadtxt(path_to_model_file, delimiter=',').astype(np.float32)
+            num_of_points_in_set = len(point_set)
 
             if self.uniform:
                 point_set = farthest_point_sample(point_set, self.npoints)
             elif self.random_choice_sampling:
-                random_indices = np.random.choice(range(10_000), self.npoints)
+                random_indices = np.random.choice(range(num_of_points_in_set), self.npoints)
                 point_set = point_set[random_indices, :]
             else:
                 point_set = point_set[0:self.npoints, :]
