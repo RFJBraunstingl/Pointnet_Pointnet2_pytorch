@@ -57,6 +57,46 @@ def map_to_synth_path(path_to_model_file):
     return result
 
 
+def apply_elastic_distortion_augmentation(point_set, granularity=[0.1], magnitude=[0.2]):
+    device = point_set.device
+    cur_type = point_set.dtype
+    coords = point_set.detach().clone()
+
+    blurx = torch.ones((3, 1, 3, 1, 1)).to(cur_type).to(device) / 3
+    blury = torch.ones((3, 1, 1, 3, 1)).to(cur_type).to(device) / 3
+    blurz = torch.ones((3, 1, 1, 1, 3)).to(cur_type).to(device) / 3
+
+    coords_min = torch.amin(coords, 0).reshape((1, -1))
+    coords_max = torch.amax(coords, 0).reshape((1, -1))
+    noise_dims_full = torch.amax(coords - coords_min, 0)
+
+    for cur_granularity, cur_magnitude in zip(granularity, magnitude):
+
+        noise_dim = (noise_dims_full // cur_granularity).to(torch.int32) + 3
+        noise = torch.randn(1, 3, *noise_dim).to(cur_type).to(device)
+
+        # Smoothing.
+        convolve = torch.nn.functional.conv3d
+        for _ in range(2):
+            noise = convolve(noise, blurx, padding='same', groups=3)
+            noise = convolve(noise, blury, padding='same', groups=3)
+            noise = convolve(noise, blurz, padding='same', groups=3)
+
+        # Trilinear interpolate noise filters for each spatial dimensions.
+        sample_coords = ((coords - coords_min)/(coords_max - coords_min))*2. - 1.
+        sample_coords = sample_coords.reshape(1, -1, 1, 1, 3) # [N, 1, 1, 3]
+        new_sample_coords = sample_coords.clone()
+        new_sample_coords[..., 0] = sample_coords[..., 2]
+        new_sample_coords[..., 2] = sample_coords[..., 0]
+        sample = torch.nn.functional.grid_sample(
+            noise, new_sample_coords, align_corners=True,
+            padding_mode='border')[0,:,:,0,0].transpose(0,1)
+
+        coords += sample * cur_magnitude
+
+    return coords
+
+
 class ModelNetDataLoader(Dataset):
     def __init__(self, root, args, split='train', process_data=False):
         self.root = root
@@ -67,6 +107,10 @@ class ModelNetDataLoader(Dataset):
         self.num_category = args.num_category
         self.random_choice_sampling = args.use_random_choice_sampling
         self.synthetic_augmentation_probability = args.synthetic_augmentation_probability if split == 'train' else 0
+        self.noise_augmentation_probability = args.noise_augmentation_probability if split == 'train' else 0
+        self.noise_augmentation_stddev = args.noise_augmentation_stddev
+        self.rotation_augmentation_probability = args.rotation_augmentation_probability if split == 'train' else 0
+        self.distortion_augmentation_probability = args.distortion_augmentation_probability if split == 'train' else 0
 
         shape_names_path = f"modelnet{self.num_category}_shape_names.txt"
         train_path = f"modelnet{self.num_category}_train.txt"
@@ -143,7 +187,26 @@ class ModelNetDataLoader(Dataset):
                 point_set = point_set[random_indices, :]
             else:
                 point_set = point_set[0:self.npoints, :]
-                
+
+            device = point_set.device
+            cur_type = point_set.dtype
+            if random.random() < self.noise_augmentation_stddev:
+                noise = torch.randn(point_set.shape, cur_type).to(device) * self.noise_augmentation_stddev
+                point_set = point_set + noise
+
+            if random.random() < self.rotation_augmentation_probability:
+                min_angle = 0
+                max_angle = 2*np.pi
+                cur_angle = torch.rand(1).item() * (max_angle - min_angle) + min_angle
+                r = torch.from_numpy(
+                    np.array([[1.0, 0.0, 0.0],
+                              [0.0, np.cos(cur_angle), -np.sin(cur_angle)],
+                              [0.0, np.sin(cur_angle), np.cos(cur_angle)]])).to(device).to(torch.float32)
+                point_set = torch.matmul(point_set, r)
+
+            if random.random() < self.distortion_augmentation_probability:
+                point_set = apply_elastic_distortion_augmentation(point_set)
+
         point_set[:, 0:3] = pc_normalize(point_set[:, 0:3])
         if not self.use_normals:
             point_set = point_set[:, 0:3]
