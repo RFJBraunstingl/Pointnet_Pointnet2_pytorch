@@ -188,21 +188,20 @@ class ModelNetDataLoader(Dataset):
             else:
                 point_set = point_set[0:self.npoints, :]
 
-            device = point_set.device
-            cur_type = point_set.dtype
             if random.random() < self.noise_augmentation_stddev:
-                noise = torch.randn(point_set.shape, cur_type).to(device) * self.noise_augmentation_stddev
+                noise = torch.randn(point_set.shape) * self.noise_augmentation_stddev
                 point_set = point_set + noise
 
             if random.random() < self.rotation_augmentation_probability:
-                min_angle = 0
-                max_angle = 2*np.pi
-                cur_angle = torch.rand(1).item() * (max_angle - min_angle) + min_angle
-                r = torch.from_numpy(
-                    np.array([[1.0, 0.0, 0.0],
-                              [0.0, np.cos(cur_angle), -np.sin(cur_angle)],
-                              [0.0, np.sin(cur_angle), np.cos(cur_angle)]])).to(device).to(torch.float32)
-                point_set = torch.matmul(point_set, r)
+                pass
+                #min_angle = 0
+                #max_angle = 2*np.pi
+                #cur_angle = torch.rand(1).item() * (max_angle - min_angle) + min_angle
+                #r = torch.from_numpy(
+                #    np.array([[1.0, 0.0, 0.0],
+                #              [0.0, np.cos(cur_angle), -np.sin(cur_angle)],
+                #              [0.0, np.sin(cur_angle), np.cos(cur_angle)]])).to(device).to(torch.float32)
+                #point_set = torch.matmul(point_set, r)
 
             if random.random() < self.distortion_augmentation_probability:
                 point_set = apply_elastic_distortion_augmentation(point_set)
