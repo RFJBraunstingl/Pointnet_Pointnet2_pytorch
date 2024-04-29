@@ -193,6 +193,9 @@ class ModelNetDataLoader(Dataset):
                 noise = np.random.normal(0, self.noise_augmentation_stddev, point_set.shape).astype(np.float32)
                 # noise = torch.randn(point_set.shape, dtype=point_set.dtype) * self.noise_augmentation_stddev
                 point_set = point_set + noise
+                # new_path = path_to_model_file + ".noise"
+                # print("saving augment path", new_path)
+                # np.savetxt(new_path, point_set[:, 0:3], delimiter=',')
 
             if random.random() < self.rotation_augmentation_probability:
                 pass
@@ -206,7 +209,12 @@ class ModelNetDataLoader(Dataset):
                 #point_set = torch.matmul(point_set, r)
 
             if random.random() < self.distortion_augmentation_probability:
-                point_set = apply_elastic_distortion_augmentation(point_set)
+                point_set_tensor = torch.from_numpy(point_set[:, 0:3])
+                point_set_tensor = apply_elastic_distortion_augmentation(point_set_tensor)
+                point_set[:, 0:3] = point_set_tensor.cpu().detach().numpy()
+                # new_path = path_to_model_file + ".distorted"
+                # print("saving augment path", new_path)
+                # np.savetxt(new_path, point_set[:, 0:3], delimiter=',')
 
         point_set[:, 0:3] = pc_normalize(point_set[:, 0:3])
         if not self.use_normals:
