@@ -189,7 +189,7 @@ class ModelNetDataLoader(Dataset):
             else:
                 point_set = point_set[0:self.npoints, :]
 
-            if random.random() < self.noise_augmentation_stddev:
+            if random.random() < self.noise_augmentation_probability:
                 noise = np.random.normal(0, self.noise_augmentation_stddev, point_set.shape).astype(np.float32)
                 # noise = torch.randn(point_set.shape, dtype=point_set.dtype) * self.noise_augmentation_stddev
                 point_set = point_set + noise
