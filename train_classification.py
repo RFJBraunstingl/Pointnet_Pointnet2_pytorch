@@ -42,6 +42,7 @@ def parse_args():
     parser.add_argument('--use_uniform_sample', action='store_true', default=False, help='use uniform sampiling')
     parser.add_argument('--use_random_choice_sampling', action='store_true', default=False, help='use random sample from 10k input')
     parser.add_argument('--data_path', type=str, default='data/modelnet40_normal_resampled/')
+    parser.add_argument('--train_file_path', type=str, default=None)
     parser.add_argument('--synthetic_augmentation_probability', default=0, type=float, help='probability of substituting a model for a synthetic counterpart')
     parser.add_argument('--noise_augmentation_probability', default=0, type=float)
     parser.add_argument('--noise_augmentation_stddev', default=0.05, type=float)

@@ -114,7 +114,8 @@ class ModelNetDataLoader(Dataset):
         self.distortion_augmentation_probability = args.distortion_augmentation_probability if split == 'train' else 0
 
         shape_names_path = f"modelnet{self.num_category}_shape_names.txt"
-        train_path = f"modelnet{self.num_category}_train.txt"
+        train_path = f"modelnet{self.num_category}_train.txt" if args.train_file_path is None else args.train_file_path
+        print(f"using train file path '{train_path}'")
         test_path = f"modelnet{self.num_category}_test.txt"
 
         self.catfile = os.path.join(self.root, shape_names_path)
