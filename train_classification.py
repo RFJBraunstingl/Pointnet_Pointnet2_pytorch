@@ -47,6 +47,7 @@ def parse_args():
     parser.add_argument('--noise_augmentation_stddev', default=0.05, type=float)
     parser.add_argument('--rotation_augmentation_probability', default=0, type=float)
     parser.add_argument('--distortion_augmentation_probability', default=0, type=float)
+    parser.add_argument('--log_class_matrix', action='store_true', default=False)
     return parser.parse_args()
 
 
@@ -56,7 +57,7 @@ def inplace_relu(m):
         m.inplace=True
 
 
-def test(model, loader, num_class=40):
+def test(model, loader, num_class=40, log_class_matrix=None):
     mean_correct = []
     class_acc = np.zeros((num_class, 3))
     classifier = model.eval()
@@ -77,6 +78,9 @@ def test(model, loader, num_class=40):
 
         correct = pred_choice.eq(target.long().data).cpu().sum()
         mean_correct.append(correct.item() / float(points.size()[0]))
+
+    if log_class_matrix is not None:
+        log_class_matrix.info(class_acc)
 
     class_acc[:, 2] = class_acc[:, 0] / class_acc[:, 1]
     class_acc = np.mean(class_acc[:, 2])
@@ -172,6 +176,7 @@ def main(args):
 
     '''TRANING'''
     logger.info('Start training...')
+    class_matrix_logger = logger if args.log_class_matrix else None
     for epoch in range(start_epoch, args.epoch):
         log_string('Epoch %d (%d/%s):' % (global_epoch + 1, epoch + 1, args.epoch))
         mean_correct = []
@@ -205,7 +210,7 @@ def main(args):
         log_string('Train Instance Accuracy: %f' % train_instance_acc)
 
         with torch.no_grad():
-            instance_acc, class_acc = test(classifier.eval(), testDataLoader, num_class=num_class)
+            instance_acc, class_acc = test(classifier.eval(), testDataLoader, num_class=num_class, log_class_matrix=class_matrix_logger)
 
             if (instance_acc >= best_instance_acc):
                 best_instance_acc = instance_acc
