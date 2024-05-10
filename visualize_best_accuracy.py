@@ -8,7 +8,7 @@ data_add0k5 = [0.899032, 0.891585, 0.891766]
 data_snfill1k = [0.894668, 0.894543, 0.89338]
 data_snadd0k5 = [0.889161]
 data_rc = [0.90013, 0.90122, 0.897742, 0.904631, 0.903449, 0.898902, 0.901547]
-data_augment_0p5 = [0.941257, 0.944736, 0.941868]
+# data_augment_0p5 = [0.941257, 0.944736, 0.941868]
 
 _, ax = plt.subplots()
 data = [
@@ -20,7 +20,7 @@ data = [
     data_snfill1k,
     data_snadd0k5,
     data_rc,
-    data_augment_0p5,
+#    data_augment_0p5,
 ]
 ax.boxplot(data)
 ax.set_xticklabels([
@@ -32,7 +32,7 @@ ax.set_xticklabels([
     'sn_f1k',
     'sn_a0k5',
     'rcs',
-    'p = 0.5'
+ #    'p = 0.5',
 ])
 
 plt.show()
