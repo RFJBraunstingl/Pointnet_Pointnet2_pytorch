@@ -15,6 +15,8 @@ from torch.utils.data import Dataset
 
 warnings.filterwarnings('ignore')
 
+rotation_augment_min_angle = 0
+rotation_augment_max_angle = 2 * np.pi
 
 def pc_normalize(pc):
     centroid = np.mean(pc, axis=0)
@@ -199,15 +201,14 @@ class ModelNetDataLoader(Dataset):
                 # np.savetxt(new_path, point_set[:, 0:3], delimiter=',')
 
             if random.random() < self.rotation_augmentation_probability:
-                pass
-                #min_angle = 0
-                #max_angle = 2*np.pi
-                #cur_angle = torch.rand(1).item() * (max_angle - min_angle) + min_angle
-                #r = torch.from_numpy(
-                #    np.array([[1.0, 0.0, 0.0],
-                #              [0.0, np.cos(cur_angle), -np.sin(cur_angle)],
-                #              [0.0, np.sin(cur_angle), np.cos(cur_angle)]])).to(device).to(torch.float32)
-                #point_set = torch.matmul(point_set, r)
+                cur_angle = random.random() * (rotation_augment_max_angle - rotation_augment_min_angle) + rotation_augment_min_angle
+                r = np.array([[1.0, 0.0, 0.0],
+                              [0.0, np.cos(cur_angle), -np.sin(cur_angle)],
+                              [0.0, np.sin(cur_angle), np.cos(cur_angle)]])
+                point_set = np.matmul(point_set, r).astype(np.float32)
+                # new_path = path_to_model_file + ".rotation"
+                # print("saving augment path", new_path)
+                # np.savetxt(new_path, point_set[:, 0:3], delimiter=',')
 
             if random.random() < self.distortion_augmentation_probability:
                 point_set_tensor = torch.from_numpy(point_set[:, 0:3])
