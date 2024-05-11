@@ -205,7 +205,7 @@ class ModelNetDataLoader(Dataset):
                 r = np.array([[1.0, 0.0, 0.0],
                               [0.0, np.cos(cur_angle), -np.sin(cur_angle)],
                               [0.0, np.sin(cur_angle), np.cos(cur_angle)]])
-                point_set = np.matmul(point_set, r).astype(np.float32)
+                point_set[:, 0:3] = np.matmul(point_set[:, 0:3], r).astype(np.float32)
                 # new_path = path_to_model_file + ".rotation"
                 # print("saving augment path", new_path)
                 # np.savetxt(new_path, point_set[:, 0:3], delimiter=',')
