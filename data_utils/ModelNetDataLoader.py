@@ -202,9 +202,9 @@ class ModelNetDataLoader(Dataset):
 
             if random.random() < self.rotation_augmentation_probability:
                 cur_angle = random.random() * (rotation_augment_max_angle - rotation_augment_min_angle) + rotation_augment_min_angle
-                r = np.array([[1.0, 0.0, 0.0],
-                              [0.0, np.cos(cur_angle), -np.sin(cur_angle)],
-                              [0.0, np.sin(cur_angle), np.cos(cur_angle)]])
+                r = np.array([[np.cos(cur_angle), 0.0, np.sin(cur_angle)],
+                              [0.0, 1.0, 0.0],
+                              [-np.sin(cur_angle), 0.0, np.cos(cur_angle)]])
                 point_set[:, 0:3] = np.matmul(point_set[:, 0:3], r).astype(np.float32)
                 # new_path = path_to_model_file + ".rotation"
                 # print("saving augment path", new_path)
